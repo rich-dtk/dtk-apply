@@ -1,0 +1,71 @@
+#!/usr/bin/env ruby
+require 'rubygems'
+require 'puppet'
+require 'pp'
+def run()
+  invocation_dir = File.expand_path('../invocations',File.dirname(__FILE__))
+  invocation_files = Dir.entries(invocation_dir).select{|f|f =~ /^site/}.map{|f|"#{invocation_dir}/#{f}"}.sort
+  base_log_dir = LogDir.create_invocations_base_dir()
+  invocation_files.each do |manifest_file|
+    puppet_apply(manifest_file,base_log_dir)
+  end
+end
+
+def puppet_apply(manifest_file,base_log_dir)
+  log_file = base_log_dir.log_file(manifest_file)
+  cmd_line = 
+    [
+     "apply", 
+     manifest_file,
+     "-l", log_file,
+     "-d"
+    ]
+  cmd = "/usr/bin/puppet" 
+  begin
+    Puppet::Node::Environment.clear()
+    Thread.current[:known_resource_types] = nil
+    pp "Executing #{cmd} #{cmd_line.join(' ')}"
+    Puppet::Util::CommandLine.new(cmd,cmd_line).execute
+   rescue SystemExit => exit
+    exit_status = exit.status
+    if exit_status == 0
+      pp "exit status = #{exit_status}"
+    else
+      raise "Bad exist status #{exit_status}"
+    end
+   ensure
+    Puppet::Util::Log.close_all()
+  end
+end
+
+class LogDir
+  def self.create_invocations_base_dir()
+    Dir.mkdir(BaseDir) unless File.exists?(BaseDir)
+    invocations_base_dir = invocations_base_dir()
+    Dir.mkdir(invocations_base_dir) unless File.exists?(invocations_base_dir)
+    new(invocations_base_dir)
+  end
+
+  def log_file(manifest_file)
+    unless manifest_file =~ /site_stage([0-9]+)_puppet_invocation_([0-9]+)/
+      raise "Put format in manifest_file"
+    end
+    stage,invocation_num = [$1,$2]
+    file_name = "stage#{stage}"
+    if invocation_num.to_i > 1
+      file_name << "-#{invocation_num}"
+    end
+    "#{@invocations_base_dir}/#{file_name}"
+  end
+ private
+  def initialize(invocations_base_dir)
+    @invocations_base_dir = invocations_base_dir
+  end
+  def self.invocations_base_dir()
+    time = Time.new.strftime("%Y-%m-%d--%H:%M:%S")
+    "#{BaseDir}/#{time}"
+  end
+
+  BaseDir = '/var/log/puppet-startup'
+end
+run()
