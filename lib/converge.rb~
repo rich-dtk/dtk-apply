@@ -1,6 +1,0 @@
-module DTK
-  class Converge
-    require File.expand_path('puppet_apply',File.dirname(__FILE__))
-  end
-end
-
