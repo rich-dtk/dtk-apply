@@ -13,9 +13,11 @@ class DTK::Converge
       end
     end
    private
-    def initialize(opts={})
+    def initialize(hash_options={})
+      super(hash_options)
+      # TODO: pass config into everything
       @invocation_objects = Invocation.ordered_objects()
-      @logfile_processor = (Logfile.processor() unless opts[:logging] == 'off')
+      @logfile_processor = (Logfile.processor() unless config[:logging] == 'off')
     end
 
     def puppet_apply(invocation_obj)
