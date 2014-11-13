@@ -12,10 +12,14 @@ OptionParser.new do|opts|
   end
 
   opts.on( '-l', '--logging LOGGING-MODE', "Logging Mode") do |logging_mode|
+    legal_vals = ['off','false','on','true']
     if ['off','false'].include?(logging_mode)
       options[:logging] = 'off'
+    elsif ['on','true'].include?(logging_mode)
+      options[:logging] = 'on'
     else
-      raise DTK::Error.new("Illegal logging mode (#{logging_mode})")
+      legal_vals_pp = "[#{legal_vals.join(',')}]"
+      raise DTK::Error.new("Illegal logging mode (#{logging_mode}); legal values are: #{legal_vals_pp}")
     end
   end
 end.parse!

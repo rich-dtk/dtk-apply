@@ -1,11 +1,11 @@
-class DTK::Converge
+module DTK; class Converge
   class PuppetApply
     class Invocation
       attr_reader :manifest_file,:stage_num,:invocation_num
       def initialize(manifest_file)
         # should have form such as site-stage-1-invocation-1.pp
         unless manifest_file =~ /site-stage-([0-9]+)-invocation-([0-9]+)\.pp$/
-          raise "Manifest File (#{manifest_file}) has wrong syntax"
+          raise Error.new("Manifest file path (#{manifest_file}) has wrong syntax")
         end
         @stage_num = $1.to_i
         @invocation_num = $2.to_i
@@ -22,7 +22,7 @@ class DTK::Converge
         self.class.invocations_base_dir()
       end
       def self.invocations_base_dir()
-        @invocations_base_dir ||= DTK::Converge.invocations_base_dir()
+        @invocations_base_dir ||= Config[:invocations_base_dir]
       end
       
       def self.order(invocation_objs)
@@ -41,4 +41,4 @@ class DTK::Converge
 
     end
   end
-end    
+end; end    
