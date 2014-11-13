@@ -1,8 +1,9 @@
-require 'puppet'
+#require 'puppet'
+require 'pp'
 class DTK::Converge
   class PuppetApply < self
-  require File.expand_path('invocation',File.dirname(__FILE__))
-  require File.expand_path('logfile',File.dirname(__FILE__))
+  require File.expand_path('puppet_apply/invocation',File.dirname(__FILE__))
+  require File.expand_path('puppet_apply/logfile',File.dirname(__FILE__))
     def self.run(opts={})
       new(opts).run()
     end
@@ -14,22 +15,22 @@ class DTK::Converge
    private
     def initialize(opts={})
       @invocation_objects = Invocation.ordered_objects()
-      @logfile_object = (LogFile.new unless @config[:logging] == 'off')
+      @logfile_processor = (Logfile.processor() unless opts[:logging] == 'off')
     end
 
     def puppet_apply(invocation_obj)
-      logfile = @logfile_object.logfile(invocation_obj)
+      logfile = @logfile_processor && @logfile_processor.logfile(invocation_obj)
       manifest_file = invocation_obj.manifest_file
       cmd_line = 
         [
          "apply", 
-         invocation_obj,
+         manifest_file,
          logfile && "-l", logfile,
          "-d"
         ].compact
       cmd = "/usr/bin/puppet" 
      begin
-       ::Puppet::Node::Environment.clear()
+       #::Puppet::Node::Environment.clear()
        Thread.current[:known_resource_types] = nil
        pp "Executing #{cmd} #{cmd_line.join(' ')}"
        #    ::Puppet::Util::CommandLine.new(cmd,cmd_line).execute
@@ -41,7 +42,7 @@ class DTK::Converge
          raise "Bad exist status #{exit_status}"
        end
       ensure
-       ::Puppet::Util::Log.close_all()
+      # ::Puppet::Util::Log.close_all()
      end
     end
   end
